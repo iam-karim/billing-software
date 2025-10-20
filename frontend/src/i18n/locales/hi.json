@@ -1,0 +1,120 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "create": "बनाएं",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "export": "निर्यात करें",
+    "actions": "कार्रवाई",
+    "status": "स्थिति",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "suspended": "निलंबित",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "confirm": "पुष्टि करें",
+    "back": "वापस"
+  },
+  "auth": {
+    "login": "लॉग इन करें",
+    "logout": "लॉग आउट",
+    "signup": "साइन अप करें",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "dontHaveAccount": "खाता नहीं है?",
+    "alreadyHaveAccount": "पहले से खाता है?"
+  },
+  "dashboard": {
+    "title": "डैशबोर्ड",
+    "welcome": "वापसी पर स्वागत है",
+    "overview": "अवलोकन",
+    "recentActivity": "हालिया गतिविधि",
+    "quickActions": "त्वरित कार्रवाई"
+  },
+  "superAdmin": {
+    "title": "सुपर एडमिन पोर्टल",
+    "dashboard": "डैशबोर्ड",
+    "users": "उपयोगकर्ता",
+    "organizations": "संगठन",
+    "plans": "सदस्यता योजनाएं",
+    "analytics": "विश्लेषण",
+    "logs": "सिस्टम लॉग",
+    "settings": "सेटिंग्स",
+    "totalUsers": "कुल उपयोगकर्ता",
+    "totalOrganizations": "कुल संगठन",
+    "monthlyRevenue": "मासिक राजस्व",
+    "activeUsers": "सक्रिय उपयोगकर्ता",
+    "totalInvoices": "कुल चालान",
+    "growthRate": "वृद्धि दर"
+  },
+  "users": {
+    "title": "उपयोगकर्ता",
+    "name": "नाम",
+    "email": "ईमेल",
+    "role": "भूमिका",
+    "company": "कंपनी",
+    "lastLogin": "अंतिम लॉगिन",
+    "createdAt": "बनाया गया",
+    "updateRole": "भूमिका अपडेट करें",
+    "resetPassword": "पासवर्ड रीसेट करें",
+    "suspend": "निलंबित करें",
+    "activate": "सक्रिय करें"
+  },
+  "organizations": {
+    "title": "संगठन",
+    "name": "नाम",
+    "plan": "योजना",
+    "userCount": "उपयोगकर्ता",
+    "invoiceCount": "चालान",
+    "totalRevenue": "कुल राजस्व",
+    "changePlan": "योजना बदलें"
+  },
+  "plans": {
+    "title": "सदस्यता योजनाएं",
+    "createPlan": "योजना बनाएं",
+    "planName": "योजना का नाम",
+    "price": "कीमत",
+    "billingPeriod": "बिलिंग अवधि",
+    "monthly": "मासिक",
+    "yearly": "वार्षिक",
+    "features": "सुविधाएँ",
+    "addFeature": "सुविधा जोड़ें",
+    "organizationCount": "संगठन"
+  },
+  "invoices": {
+    "title": "चालान",
+    "createInvoice": "चालान बनाएं",
+    "invoiceNumber": "चालान संख्या",
+    "client": "ग्राहक",
+    "issueDate": "जारी करने की तिथि",
+    "dueDate": "नियत तारीख",
+    "amount": "राशि",
+    "paid": "भुगतान किया गया",
+    "unpaid": "अवैतनिक",
+    "overdue": "अतिदेय"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "general": "सामान्य सेटिंग्स",
+    "systemName": "सिस्टम का नाम",
+    "supportEmail": "सपोर्ट ईमेल",
+    "currency": "मुद्रा",
+    "taxRate": "कर दर",
+    "dateFormat": "तिथि प्रारूप",
+    "timeZone": "समय क्षेत्र",
+    "language": "भाषा",
+    "region": "क्षेत्र"
+  },
+  "errors": {
+    "somethingWentWrong": "कुछ गलत हो गया",
+    "unauthorized": "अनधिकृत पहुंच",
+    "notFound": "नहीं मिला",
+    "serverError": "सर्वर त्रुटि"
+  }
+}

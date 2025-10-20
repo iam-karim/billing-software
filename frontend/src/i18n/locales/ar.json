@@ -1,0 +1,120 @@
+{
+  "common": {
+    "loading": "جار التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "suspended": "معلق",
+    "yes": "نعم",
+    "no": "لا",
+    "confirm": "تأكيد",
+    "back": "رجوع"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "signup": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "هل لديك حساب بالفعل؟"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "welcome": "مرحباً بعودتك",
+    "overview": "نظرة عامة",
+    "recentActivity": "النشاط الأخير",
+    "quickActions": "إجراءات سريعة"
+  },
+  "superAdmin": {
+    "title": "بوابة المدير الأعلى",
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "organizations": "المنظمات",
+    "plans": "خطط الاشتراك",
+    "analytics": "التحليلات",
+    "logs": "سجلات النظام",
+    "settings": "الإعدادات",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalOrganizations": "إجمالي المنظمات",
+    "monthlyRevenue": "الإيرادات الشهرية",
+    "activeUsers": "المستخدمون النشطون",
+    "totalInvoices": "إجمالي الفواتير",
+    "growthRate": "معدل النمو"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "company": "الشركة",
+    "lastLogin": "آخر تسجيل دخول",
+    "createdAt": "تاريخ الإنشاء",
+    "updateRole": "تحديث الدور",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "suspend": "تعليق",
+    "activate": "تفعيل"
+  },
+  "organizations": {
+    "title": "المنظمات",
+    "name": "الاسم",
+    "plan": "الخطة",
+    "userCount": "المستخدمون",
+    "invoiceCount": "الفواتير",
+    "totalRevenue": "إجمالي الإيرادات",
+    "changePlan": "تغيير الخطة"
+  },
+  "plans": {
+    "title": "خطط الاشتراك",
+    "createPlan": "إنشاء خطة",
+    "planName": "اسم الخطة",
+    "price": "السعر",
+    "billingPeriod": "فترة الفوترة",
+    "monthly": "شهري",
+    "yearly": "سنوي",
+    "features": "الميزات",
+    "addFeature": "إضافة ميزة",
+    "organizationCount": "المنظمات"
+  },
+  "invoices": {
+    "title": "الفواتير",
+    "createInvoice": "إنشاء فاتورة",
+    "invoiceNumber": "رقم الفاتورة",
+    "client": "العميل",
+    "issueDate": "تاريخ الإصدار",
+    "dueDate": "تاريخ الاستحقاق",
+    "amount": "المبلغ",
+    "paid": "مدفوع",
+    "unpaid": "غير مدفوع",
+    "overdue": "متأخر"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "general": "الإعدادات العامة",
+    "systemName": "اسم النظام",
+    "supportEmail": "بريد الدعم",
+    "currency": "العملة",
+    "taxRate": "معدل الضريبة",
+    "dateFormat": "تنسيق التاريخ",
+    "timeZone": "المنطقة الزمنية",
+    "language": "اللغة",
+    "region": "المنطقة"
+  },
+  "errors": {
+    "somethingWentWrong": "حدث خطأ ما",
+    "unauthorized": "وصول غير مصرح",
+    "notFound": "غير موجود",
+    "serverError": "خطأ في الخادم"
+  }
+}

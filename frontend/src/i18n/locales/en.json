@@ -1,0 +1,120 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "suspended": "Suspended",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions"
+  },
+  "superAdmin": {
+    "title": "Super Admin Portal",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "organizations": "Organizations",
+    "plans": "Subscription Plans",
+    "analytics": "Analytics",
+    "logs": "System Logs",
+    "settings": "Settings",
+    "totalUsers": "Total Users",
+    "totalOrganizations": "Total Organizations",
+    "monthlyRevenue": "Monthly Revenue",
+    "activeUsers": "Active Users",
+    "totalInvoices": "Total Invoices",
+    "growthRate": "Growth Rate"
+  },
+  "users": {
+    "title": "Users",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "company": "Company",
+    "lastLogin": "Last Login",
+    "createdAt": "Created At",
+    "updateRole": "Update Role",
+    "resetPassword": "Reset Password",
+    "suspend": "Suspend",
+    "activate": "Activate"
+  },
+  "organizations": {
+    "title": "Organizations",
+    "name": "Name",
+    "plan": "Plan",
+    "userCount": "Users",
+    "invoiceCount": "Invoices",
+    "totalRevenue": "Total Revenue",
+    "changePlan": "Change Plan"
+  },
+  "plans": {
+    "title": "Subscription Plans",
+    "createPlan": "Create Plan",
+    "planName": "Plan Name",
+    "price": "Price",
+    "billingPeriod": "Billing Period",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "features": "Features",
+    "addFeature": "Add Feature",
+    "organizationCount": "Organizations"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "createInvoice": "Create Invoice",
+    "invoiceNumber": "Invoice Number",
+    "client": "Client",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "amount": "Amount",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "overdue": "Overdue"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General Settings",
+    "systemName": "System Name",
+    "supportEmail": "Support Email",
+    "currency": "Currency",
+    "taxRate": "Tax Rate",
+    "dateFormat": "Date Format",
+    "timeZone": "Time Zone",
+    "language": "Language",
+    "region": "Region"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "unauthorized": "Unauthorized access",
+    "notFound": "Not found",
+    "serverError": "Server error"
+  }
+}

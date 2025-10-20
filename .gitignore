@@ -1,0 +1,136 @@
+# =====================================
+# Logs
+# =====================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =====================================
+# Dependency directories
+# =====================================
+node_modules/
+bower_components/
+
+# =====================================
+# Build outputs
+# =====================================
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.cache/
+.temp/
+*.local
+
+# =====================================
+# Environment files
+# =====================================
+.env
+.env.*
+!.env.example
+
+# =====================================
+# Runtime / Local Databases
+# =====================================
+*.pid
+*.seed
+*.pid.lock
+*.log.*
+dump.rdb
+*.sqlite
+*.sqlite3
+data/
+db/
+mongodb/
+*.db
+
+# =====================================
+# Prisma (if ever used later)
+# =====================================
+prisma/migrations/
+prisma/dev.db
+prisma/.env
+
+# =====================================
+# Docker
+# =====================================
+docker-compose.override.yml
+Dockerfile.dev
+
+# =====================================
+# Editor & IDE settings
+# =====================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.iml
+
+# =====================================
+# System files
+# =====================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =====================================
+# Optional npm/yarn/pnpm lock files
+# (uncomment if you use only one manager)
+# =====================================
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+
+# =====================================
+# Testing / Coverage
+# =====================================
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
+
+# =====================================
+# Framework-specific
+# =====================================
+
+# Next.js
+.vercel/
+
+# React Native / Expo (future-ready)
+.expo/
+.expo-shared/
+android/
+ios/
+*.keystore
+*.jks
+*.gradle
+
+# TypeScript
+*.tsbuildinfo
+
+# Storybook
+storybook-static/
+
+# =====================================
+# Miscellaneous / Archives
+# =====================================
+*.tgz
+*.zip
+*.tar
+*.gz
+*.tmp
+*.temp
+*.bak
+
