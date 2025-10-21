@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { signupSchema } from '@/lib/validations/auth';
 import { z } from 'zod';
+import { PublicNavbar } from '@/components/PublicNavbar';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -51,6 +52,9 @@ export default function Signup() {
   };
 
   return (
+   <>
+   <PublicNavbar />
+      <br/> <br/> <br/>
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -130,5 +134,6 @@ export default function Signup() {
         </CardContent>
       </Card>
     </div>
+   </>
   );
 }

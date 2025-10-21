@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,16 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token, user: userData } = await authService.login(credentials);
     localStorage.setItem('auth_token', token);
     setUser(userData);
-    //fixed this 
-    return { token, user: userData }
   };
 
   const signup = async (credentials: RegisterCredentials) => {
     const { token, user: userData } = await authService.register(credentials);
     localStorage.setItem('auth_token', token);
     setUser(userData);
-    //fixed this
-    return { token, user: userData };
   };
 
   const logout = () => {
@@ -67,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: !!user,
         isSuperAdmin: user?.role === 'SUPER_ADMIN',
+        isAdmin: user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN',
       }}
     >
       {children}
