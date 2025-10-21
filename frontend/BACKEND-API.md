@@ -1,903 +1,1129 @@
-# Backend API Documentation
+# Backend API Documentation - Invoice Management System
+## Complete TypeScript + MongoDB Implementation
 
-Complete backend implementation guide for the Multi-Tenant Invoice SaaS Application with Super Admin Portal.
+## Table of Contents
+1. [Technology Stack](#technology-stack)
+2. [Database Schema (MongoDB)](#database-schema-mongodb)
+3. [Authentication & Authorization](#authentication--authorization)
+4. [API Endpoints - Complete Reference](#api-endpoints---complete-reference)
+5. [Payment Gateway Integration](#payment-gateway-integration)
+6. [Tax Calculation System](#tax-calculation-system)
+7. [Analytics & Dynamic Reports](#analytics--dynamic-reports)
+8. [Multi-Language & Currency System](#multi-language--currency-system)
+9. [Environment Variables](#environment-variables)
+10. [Error Handling](#error-handling)
+11. [Data Points & Calculations](#data-points--calculations)
+
+---
 
 ## Technology Stack
-- **Framework**: Node.js with Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT with bcrypt
-- **Region Support**: India (INR/GST) & Saudi Arabia (SAR/VAT)
 
----
+### Backend Framework
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript 5.x
+- **Framework**: Express.js 4.x
+- **Database**: MongoDB 6.x
+- **ODM**: Mongoose 8.x
 
-## Database Schema
-
-### 1. User Management
-
-```prisma
-enum UserRole {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum UserStatus {
-  active
-  suspended
-  deleted
-}
-
-model User {
-  id                String        @id @default(uuid())
-  email             String        @unique
-  passwordHash      String
-  name              String
-  company           String?
-  status            UserStatus    @default(active)
-  organizationId    String?
-  lastLogin         DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  organization      Organization? @relation(fields: [organizationId], references: [id])
-  roles             UserRole[]
-  invoices          Invoice[]
-  clients           Client[]
-  products          Product[]
-}
-
-model UserRole {
-  id        String   @id @default(uuid())
-  userId    String
-  role      UserRole
-  assignedAt DateTime @default(now())
-  assignedBy String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, role])
-}
-```
-
-### 2. Organization & Plans
-
-```prisma
-model Organization {
-  id              String            @id @default(uuid())
-  name            String
-  planId          String
-  status          String            @default("active")
-  taxRegistration String?           // GST/VAT number
-  region          String            @default("IN") // IN, SA, US
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  plan            SubscriptionPlan  @relation(fields: [planId], references: [id])
-  users           User[]
-  invoices        Invoice[]
-}
-
-enum BillingPeriod {
-  monthly
-  yearly
-}
-
-model SubscriptionPlan {
-  id                String          @id @default(uuid())
-  name              String
-  price             Decimal         @db.Decimal(10, 2)
-  currency          String          @default("USD")
-  billingPeriod     BillingPeriod
-  features          String[]
-  isActive          Boolean         @default(true)
-  maxUsers          Int?
-  maxInvoices       Int?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  organizations     Organization[]
-}
-```
-
-### 3. Invoice System
-
-```prisma
-model Invoice {
-  id              String          @id @default(uuid())
-  invoiceNumber   String          @unique
-  clientId        String
-  userId          String
-  organizationId  String
-  issueDate       DateTime
-  dueDate         DateTime
-  subtotal        Decimal         @db.Decimal(10, 2)
-  taxAmount       Decimal         @db.Decimal(10, 2)
-  taxRate         Decimal         @db.Decimal(5, 2)
-  taxType         String          // GST, VAT, Sales Tax
-  total           Decimal         @db.Decimal(10, 2)
-  currency        String          @default("USD")
-  status          String          @default("unpaid")
-  notes           String?
-  region          String          // IN, SA, US
-  taxBreakdown    Json?           // CGST/SGST/IGST for India
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  client          Client          @relation(fields: [clientId], references: [id])
-  user            User            @relation(fields: [userId], references: [id])
-  organization    Organization    @relation(fields: [organizationId], references: [id])
-  items           InvoiceItem[]
-}
-
-model InvoiceItem {
-  id          String    @id @default(uuid())
-  invoiceId   String
-  description String
-  quantity    Decimal   @db.Decimal(10, 2)
-  rate        Decimal   @db.Decimal(10, 2)
-  amount      Decimal   @db.Decimal(10, 2)
-  taxable     Boolean   @default(true)
-  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model Client {
-  id              String    @id @default(uuid())
-  name            String
-  email           String
-  phone           String?
-  company         String?
-  address         String?
-  taxNumber       String?   // GST/VAT number
-  region          String?
-  userId          String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  user            User      @relation(fields: [userId], references: [id])
-  invoices        Invoice[]
-}
-```
-
-### 4. System Logs
-
-```prisma
-model SystemLog {
-  id          String    @id @default(uuid())
-  action      String
-  userId      String?
-  userName    String?
-  metadata    Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime  @default(now())
-  
-  @@index([action])
-  @@index([userId])
-  @@index([createdAt])
-}
-```
-
-### 5. System Settings
-
-```prisma
-model SystemSettings {
-  id                String   @id @default(uuid())
-  systemName        String   @default("InvoicePro")
-  supportEmail      String
-  defaultCurrency   String   @default("USD")
-  defaultTaxRate    Decimal  @db.Decimal(5, 2) @default(0)
-  dateFormat        String   @default("MMM dd, yyyy")
-  timeZone          String   @default("UTC")
-  updatedAt         DateTime @updatedAt
+### Essential Packages
+```json
+{
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/express": "^4.17.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "express-validator": "^7.0.0",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "stripe": "^14.0.0",
+    "razorpay": "^2.9.0",
+    "winston": "^3.11.0",
+    "rate-limiter-flexible": "^5.0.0",
+    "zod": "^3.22.0",
+    "dayjs": "^1.11.0",
+    "nodemailer": "^6.9.0"
+  }
 }
 ```
 
 ---
 
-## API Endpoints
+## Database Schema (MongoDB)
 
-### Authentication
+### 1. Users Collection
+```typescript
+interface IUser {
+  _id: ObjectId;
+  name: string;
+  email: string;
+  password: string; // hashed with bcrypt
+  organizationId: ObjectId;
+  status: 'active' | 'suspended' | 'inactive';
+  emailVerified: boolean;
+  phone?: string;
+  avatar?: string;
+  locale: 'en' | 'ar' | 'hi'; // Language preference
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.users.createIndex({ email: 1 }, { unique: true });
+db.users.createIndex({ organizationId: 1 });
+db.users.createIndex({ status: 1 });
+```
+
+### 2. User Roles Collection
+```typescript
+interface IUserRole {
+  _id: ObjectId;
+  userId: ObjectId;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+  organizationId?: ObjectId; // null for SUPER_ADMIN
+  createdAt: Date;
+}
+
+// Indexes
+db.userRoles.createIndex({ userId: 1, organizationId: 1 }, { unique: true });
+db.userRoles.createIndex({ role: 1 });
+```
+
+### 3. Organizations Collection
+```typescript
+interface IOrganization {
+  _id: ObjectId;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  country: string; // 'US', 'IN', 'SA'
+  taxId?: string; // GST for India, VAT for Saudi
+  logo?: string;
+  status: 'active' | 'suspended' | 'trial';
+  subscriptionId?: ObjectId;
+  settings: {
+    currency: 'USD' | 'INR' | 'SAR';
+    locale: 'en' | 'ar' | 'hi';
+    timezone: string;
+    dateFormat: string;
+    taxRate: number;
+    taxType: 'GST' | 'VAT' | 'SALES_TAX';
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.organizations.createIndex({ email: 1 }, { unique: true });
+db.organizations.createIndex({ status: 1 });
+db.organizations.createIndex({ country: 1 });
+```
+
+### 4. Subscription Plans Collection
+```typescript
+interface ISubscriptionPlan {
+  _id: ObjectId;
+  name: string;
+  description: string;
+  price: number; // Base price in USD
+  currency: 'USD' | 'INR' | 'SAR';
+  billingCycle: 'monthly' | 'yearly';
+  features: string[];
+  limits: {
+    maxUsers: number;
+    maxInvoices: number;
+    maxClients: number;
+    maxStorage: number; // in MB
+  };
+  isActive: boolean;
+  stripePriceId?: string;
+  razorpayPlanId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.subscriptionPlans.createIndex({ isActive: 1 });
+db.subscriptionPlans.createIndex({ currency: 1 });
+```
+
+### 5. Subscriptions Collection
+```typescript
+interface ISubscription {
+  _id: ObjectId;
+  organizationId: ObjectId;
+  planId: ObjectId;
+  status: 'active' | 'cancelled' | 'expired' | 'trial';
+  startDate: Date;
+  endDate: Date;
+  autoRenew: boolean;
+  paymentGateway: 'stripe' | 'razorpay';
+  gatewaySubscriptionId?: string;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelledAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.subscriptions.createIndex({ organizationId: 1 });
+db.subscriptions.createIndex({ status: 1 });
+db.subscriptions.createIndex({ endDate: 1 });
+```
+
+### 6. Clients Collection
+```typescript
+interface IClient {
+  _id: ObjectId;
+  organizationId: ObjectId;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  taxId?: string; // GST/VAT number
+  paymentTerms?: string;
+  status: 'active' | 'inactive';
+  totalInvoiced: number;
+  totalPaid: number;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.clients.createIndex({ organizationId: 1 });
+db.clients.createIndex({ email: 1, organizationId: 1 });
+db.clients.createIndex({ status: 1 });
+```
+
+### 7. Products Collection
+```typescript
+interface IProduct {
+  _id: ObjectId;
+  organizationId: ObjectId;
+  name: string;
+  description?: string;
+  sku?: string;
+  price: number;
+  currency: 'USD' | 'INR' | 'SAR';
+  taxable: boolean;
+  taxRate?: number;
+  category?: string;
+  isActive: boolean;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.products.createIndex({ organizationId: 1 });
+db.products.createIndex({ sku: 1, organizationId: 1 }, { unique: true, sparse: true });
+db.products.createIndex({ isActive: 1 });
+```
+
+### 8. Invoices Collection
+```typescript
+interface IInvoice {
+  _id: ObjectId;
+  organizationId: ObjectId;
+  invoiceNumber: string; // Auto-generated: INV-2024-0001
+  clientId: ObjectId;
+  issueDate: Date;
+  dueDate: Date;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  items: Array<{
+    productId?: ObjectId;
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    taxable: boolean;
+  }>;
+  subtotal: number;
+  taxDetails: {
+    type: 'GST' | 'VAT' | 'SALES_TAX';
+    rate: number;
+    amount: number;
+    breakdown?: {
+      cgst?: number;
+      sgst?: number;
+      igst?: number;
+    };
+  };
+  total: number;
+  currency: 'USD' | 'INR' | 'SAR';
+  notes?: string;
+  paymentStatus: 'unpaid' | 'partial' | 'paid';
+  paidAmount: number;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.invoices.createIndex({ organizationId: 1 });
+db.invoices.createIndex({ invoiceNumber: 1 }, { unique: true });
+db.invoices.createIndex({ clientId: 1 });
+db.invoices.createIndex({ status: 1 });
+db.invoices.createIndex({ dueDate: 1 });
+db.invoices.createIndex({ issueDate: -1 });
+```
+
+### 9. Payments Collection
+```typescript
+interface IPayment {
+  _id: ObjectId;
+  organizationId: ObjectId;
+  invoiceId?: ObjectId;
+  subscriptionId?: ObjectId;
+  amount: number;
+  currency: 'USD' | 'INR' | 'SAR';
+  paymentGateway: 'stripe' | 'razorpay' | 'manual';
+  gatewayTransactionId?: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  paymentMethod: 'card' | 'upi' | 'netbanking' | 'wallet' | 'bank_transfer';
+  metadata?: Record<string, any>;
+  paidAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Indexes
+db.payments.createIndex({ organizationId: 1 });
+db.payments.createIndex({ invoiceId: 1 });
+db.payments.createIndex({ subscriptionId: 1 });
+db.payments.createIndex({ status: 1 });
+db.payments.createIndex({ gatewayTransactionId: 1 });
+```
+
+### 10. System Logs Collection
+```typescript
+interface ISystemLog {
+  _id: ObjectId;
+  userId?: ObjectId;
+  organizationId?: ObjectId;
+  action: string; // 'user.login', 'invoice.create', 'payment.success'
+  resource: string; // 'user', 'invoice', 'payment'
+  resourceId?: ObjectId;
+  method: string; // 'GET', 'POST', 'PUT', 'DELETE'
+  endpoint: string;
+  ipAddress: string;
+  userAgent: string;
+  status: 'success' | 'error';
+  errorMessage?: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+
+// Indexes
+db.systemLogs.createIndex({ organizationId: 1, createdAt: -1 });
+db.systemLogs.createIndex({ userId: 1, createdAt: -1 });
+db.systemLogs.createIndex({ action: 1 });
+db.systemLogs.createIndex({ createdAt: -1 });
+db.systemLogs.createIndex({ createdAt: 1 }, { expireAfterSeconds: 7776000 }); // 90 days TTL
+```
+
+### 11. System Settings Collection
+```typescript
+interface ISystemSettings {
+  _id: ObjectId;
+  key: string; // unique identifier
+  value: any;
+  type: 'string' | 'number' | 'boolean' | 'json';
+  description?: string;
+  updatedBy?: ObjectId;
+  updatedAt: Date;
+}
+
+// Indexes
+db.systemSettings.createIndex({ key: 1 }, { unique: true });
+```
+
+---
+
+## Authentication & Authorization
+
+### JWT Token Structure
+```typescript
+interface JWTPayload {
+  userId: string;
+  organizationId?: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+  email: string;
+  iat: number;
+  exp: number;
+}
+```
+
+### Authentication Endpoints
 
 #### POST /api/auth/register
-Register new user
-```json
-Request:
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe",
-  "company": "ABC Corp"
-}
+Register new user and organization (self-signup)
 
-Response:
+**Request:**
+```typescript
 {
-  "token": "jwt_token_here",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "name": "John Doe",
-    "role": "USER"
-  }
+  name: string;
+  email: string;
+  password: string;
+  company?: string;
+  country: 'US' | 'IN' | 'SA';
+}
+```
+
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      organizationId: string;
+    };
+    organization: {
+      id: string;
+      name: string;
+      status: 'trial';
+    };
+    token: string;
+  };
 }
 ```
 
 #### POST /api/auth/login
-```json
-Request:
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
+User login
 
-Response:
+**Request:**
+```typescript
 {
-  "token": "jwt_token_here",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "name": "John Doe",
-    "role": "SUPER_ADMIN" // or USER, ADMIN
-  }
+  email: string;
+  password: string;
+}
+```
+
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      organizationId: string;
+    };
+    token: string;
+    expiresIn: number;
+  };
+}
+```
+
+#### POST /api/auth/logout
+Logout user (blacklist token)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```typescript
+{
+  success: true;
+  message: 'Logged out successfully';
 }
 ```
 
 #### GET /api/auth/me
-Get current user (requires auth token)
+Get current user profile
 
----
+**Headers:** `Authorization: Bearer <token>`
 
-### Super Admin - Analytics
-
-#### GET /api/super-admin/analytics
-System-wide statistics
-```json
-Response:
+**Response:**
+```typescript
 {
-  "totalUsers": 1523,
-  "totalOrganizations": 45,
-  "totalInvoices": 8932,
-  "monthlyRevenue": 125000,
-  "activeUsers": 1234,
-  "pendingPayments": 15000
-}
-```
-
-#### GET /api/super-admin/analytics/revenue?period=12m
-Revenue chart data
-```json
-Response:
-{
-  "data": [
-    { "month": "Jan 2024", "revenue": 10000, "invoices": 120 },
-    { "month": "Feb 2024", "revenue": 12000, "invoices": 145 }
-  ]
-}
-```
-
-#### GET /api/super-admin/analytics/plans
-Plan distribution
-```json
-Response:
-{
-  "distribution": [
-    { "name": "Basic", "count": 20, "revenue": 2000 },
-    { "name": "Pro", "count": 15, "revenue": 7500 }
-  ]
+  success: true;
+  data: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    organizationId: string;
+    organization: {
+      name: string;
+      currency: string;
+      locale: string;
+    };
+  };
 }
 ```
 
 ---
 
-### Super Admin - User Management
+## API Endpoints - Complete Reference
 
-#### GET /api/super-admin/users?page=1&limit=20&search=&role=&status=
-List all users with filters
+### User Management
 
-#### GET /api/super-admin/users/:id
-Get user details
+#### GET /api/users
+Get users (with filters)
 
-#### PUT /api/super-admin/users/:id/role
-Update user role
-```json
-Request:
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Params:**
+```typescript
 {
-  "role": "ADMIN"
+  page?: number; // default: 1
+  limit?: number; // default: 20
+  search?: string;
+  role?: 'ADMIN' | 'USER';
+  status?: 'active' | 'suspended' | 'inactive';
+  organizationId?: string; // SUPER_ADMIN only
 }
 ```
 
-#### PUT /api/super-admin/users/:id/status
-Update user status
-```json
-Request:
+**Response:**
+```typescript
 {
-  "status": "suspended"
+  success: true;
+  data: {
+    users: Array<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      status: string;
+      organizationId: string;
+      createdAt: Date;
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
 }
 ```
 
-#### DELETE /api/super-admin/users/:id
-Soft delete user
+#### POST /api/users
+Create new user (ADMIN only)
 
-#### POST /api/super-admin/users/:id/reset-password
-Send password reset email
+**Request:**
+```typescript
+{
+  name: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'USER';
+  phone?: string;
+}
+```
+
+#### PUT /api/users/:id
+Update user
+
+#### DELETE /api/users/:id
+Delete user (soft delete)
+
+#### POST /api/users/:id/reset-password
+Reset user password (ADMIN only)
 
 ---
 
-### Super Admin - Organizations
+### Organization Management
 
-#### GET /api/super-admin/organizations?page=1&limit=20&search=
-List all organizations
+#### GET /api/organizations
+Get all organizations (SUPER_ADMIN only)
 
-#### GET /api/super-admin/organizations/:id
-Get organization details with users and invoices
+**Query Params:**
+```typescript
+{
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: 'active' | 'suspended' | 'trial';
+  country?: 'US' | 'IN' | 'SA';
+}
+```
 
-#### PUT /api/super-admin/organizations/:id
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    organizations: Array<{
+      id: string;
+      name: string;
+      email: string;
+      country: string;
+      status: string;
+      subscriptionPlan?: string;
+      userCount: number;
+      invoiceCount: number;
+      totalRevenue: number;
+      createdAt: Date;
+    }>;
+    pagination: { ... };
+  };
+}
+```
+
+#### GET /api/organizations/:id
+Get organization details
+
+#### PUT /api/organizations/:id
 Update organization
-```json
-Request:
-{
-  "name": "Updated Name",
-  "planId": "plan_uuid"
-}
-```
 
-#### PUT /api/super-admin/organizations/:id/plan
-Change subscription plan
-```json
-Request:
-{
-  "planId": "new_plan_uuid"
-}
-```
+#### POST /api/organizations/:id/suspend
+Suspend organization (SUPER_ADMIN only)
 
-#### POST /api/super-admin/organizations/:id/suspend
-Suspend organization
-
-#### POST /api/super-admin/organizations/:id/activate
-Activate organization
+#### POST /api/organizations/:id/activate
+Activate organization (SUPER_ADMIN only)
 
 ---
 
-### Super Admin - Subscription Plans
+### Subscription Plans
 
-#### GET /api/super-admin/plans
-List all plans
+#### GET /api/plans
+Get all subscription plans
 
-#### POST /api/super-admin/plans
-Create new plan
-```json
-Request:
+**Query Params:**
+```typescript
 {
-  "name": "Enterprise",
-  "price": 99.99,
-  "currency": "USD",
-  "billingPeriod": "monthly",
-  "features": ["Unlimited invoices", "10 users", "Priority support"],
-  "isActive": true
+  currency?: 'USD' | 'INR' | 'SAR';
+  billingCycle?: 'monthly' | 'yearly';
+  isActive?: boolean;
 }
 ```
 
-#### PUT /api/super-admin/plans/:id
-Update plan
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    plans: Array<{
+      id: string;
+      name: string;
+      description: string;
+      price: number;
+      currency: string;
+      billingCycle: string;
+      features: string[];
+      limits: {
+        maxUsers: number;
+        maxInvoices: number;
+        maxClients: number;
+        maxStorage: number;
+      };
+    }>;
+  };
+}
+```
 
-#### DELETE /api/super-admin/plans/:id
-Delete plan (if no organizations using it)
+#### POST /api/plans
+Create subscription plan (SUPER_ADMIN only)
 
-#### PATCH /api/super-admin/plans/:id/toggle
-Toggle plan active status
+#### PUT /api/plans/:id
+Update plan (SUPER_ADMIN only)
+
+#### DELETE /api/plans/:id
+Delete plan (SUPER_ADMIN only)
+
+#### POST /api/plans/:id/toggle-status
+Activate/deactivate plan
 
 ---
 
-### Super Admin - System Logs
+### Client Management
 
-#### GET /api/super-admin/logs?page=1&limit=50&action=&userId=&startDate=&endDate=
-Get system logs with filters
+#### GET /api/clients
+Get all clients
 
-#### GET /api/super-admin/logs/export?format=csv
-Export logs as CSV
+**Query Params:**
+```typescript
+{
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: 'active' | 'inactive';
+  sortBy?: 'name' | 'createdAt' | 'totalInvoiced';
+  sortOrder?: 'asc' | 'desc';
+}
+```
+
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    clients: Array<{
+      id: string;
+      name: string;
+      email: string;
+      company?: string;
+      totalInvoiced: number;
+      totalPaid: number;
+      outstandingBalance: number;
+      invoiceCount: number;
+      status: string;
+      createdAt: Date;
+    }>;
+    pagination: { ... };
+  };
+}
+```
+
+#### POST /api/clients
+Create new client
+
+#### PUT /api/clients/:id
+Update client
+
+#### DELETE /api/clients/:id
+Delete client
+
+#### GET /api/clients/:id/invoices
+Get client's invoices
 
 ---
 
-### Super Admin - Settings
+### Invoice Management
+
+#### GET /api/invoices
+Get all invoices
+
+**Query Params:**
+```typescript
+{
+  page?: number;
+  limit?: number;
+  search?: string;
+  clientId?: string;
+  status?: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  paymentStatus?: 'unpaid' | 'partial' | 'paid';
+  fromDate?: string; // ISO date
+  toDate?: string; // ISO date
+  sortBy?: 'invoiceNumber' | 'issueDate' | 'dueDate' | 'total';
+  sortOrder?: 'asc' | 'desc';
+}
+```
+
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    invoices: Array<{
+      id: string;
+      invoiceNumber: string;
+      client: {
+        id: string;
+        name: string;
+        email: string;
+      };
+      issueDate: Date;
+      dueDate: Date;
+      status: string;
+      paymentStatus: string;
+      subtotal: number;
+      taxAmount: number;
+      total: number;
+      paidAmount: number;
+      balance: number;
+      currency: string;
+    }>;
+    summary: {
+      totalInvoiced: number;
+      totalPaid: number;
+      totalOutstanding: number;
+      count: number;
+    };
+    pagination: { ... };
+  };
+}
+```
+
+#### POST /api/invoices
+Create invoice (with automatic calculations)
+
+**Request:**
+```typescript
+{
+  clientId: string;
+  issueDate: string; // ISO date
+  dueDate: string; // ISO date
+  items: Array<{
+    productId?: string;
+    description: string;
+    quantity: number;
+    rate: number;
+    taxable: boolean;
+  }>;
+  notes?: string;
+  status?: 'draft' | 'sent';
+}
+```
+
+**Auto-calculations performed:**
+- Invoice number auto-generated
+- Subtotal = sum of all item amounts
+- Tax calculated based on organization's country and tax settings
+- Total = subtotal + tax
+
+#### PUT /api/invoices/:id
+Update invoice (only if status is 'draft')
+
+#### DELETE /api/invoices/:id
+Delete invoice (only if status is 'draft')
+
+#### POST /api/invoices/:id/send
+Send invoice to client (email notification)
+
+#### POST /api/invoices/:id/mark-paid
+Mark invoice as paid
+
+#### GET /api/invoices/:id/pdf
+Generate and download invoice PDF
+
+---
+
+### Payment Management
+
+#### GET /api/payments
+Get payment history
+
+#### POST /api/payments/create-intent
+Create payment intent (for Stripe/Razorpay)
+
+#### POST /api/payments/confirm
+Confirm payment (webhook from gateway)
+
+#### POST /api/payments/webhook/stripe
+Stripe webhook endpoint
+
+#### POST /api/payments/webhook/razorpay
+Razorpay webhook endpoint
+
+---
+
+### Analytics & Dynamic Reports
+
+#### GET /api/analytics/dashboard
+Get dashboard analytics
+
+**Query Params:**
+```typescript
+{
+  period?: '7d' | '30d' | '90d' | '1y';
+}
+```
+
+**Response:**
+```typescript
+{
+  success: true;
+  data: {
+    overview: {
+      totalRevenue: number;
+      totalInvoices: number;
+      paidInvoices: number;
+      pendingInvoices: number;
+      totalClients: number;
+      activeClients: number;
+    };
+    revenueByMonth: Array<{
+      month: string;
+      revenue: number;
+      invoiceCount: number;
+    }>;
+    topClients: Array<{
+      clientId: string;
+      clientName: string;
+      totalInvoiced: number;
+      invoiceCount: number;
+    }>;
+    paymentStatusDistribution: {
+      paid: number;
+      partial: number;
+      unpaid: number;
+    };
+    overdueInvoices: {
+      count: number;
+      totalAmount: number;
+    };
+  };
+}
+```
+
+#### GET /api/analytics/revenue
+Revenue analytics with dynamic calculations
+
+#### GET /api/analytics/tax-report
+Tax report for accounting
+
+#### GET /api/analytics/client-report
+Client-wise revenue report
+
+---
+
+### Super Admin Endpoints
+
+#### GET /api/super-admin/stats
+System-wide statistics
+
+#### GET /api/super-admin/logs
+System logs
+
+#### GET /api/super-admin/revenue-chart
+Revenue chart data
 
 #### GET /api/super-admin/settings
 Get system settings
 
 #### PUT /api/super-admin/settings
 Update system settings
-```json
-Request:
-{
-  "systemName": "InvoicePro",
-  "supportEmail": "support@invoicepro.com",
-  "defaultCurrency": "USD",
-  "defaultTaxRate": 0,
-  "dateFormat": "MM/dd/yyyy",
-  "timeZone": "America/New_York"
-}
-```
-
----
-
-### User - Invoices
-
-#### GET /api/invoices?page=1&status=&search=
-Get user's invoices
-
-#### POST /api/invoices
-Create invoice
-```json
-Request:
-{
-  "clientId": "client_uuid",
-  "issueDate": "2024-01-01",
-  "dueDate": "2024-01-31",
-  "items": [
-    {
-      "description": "Web Development",
-      "quantity": 10,
-      "rate": 50,
-      "taxable": true
-    }
-  ],
-  "notes": "Payment terms: Net 30",
-  "region": "IN" // Auto-calculates GST for India
-}
-
-Response:
-{
-  "id": "invoice_uuid",
-  "invoiceNumber": "INV-2024-001",
-  "subtotal": 500,
-  "taxAmount": 90, // 18% GST
-  "taxBreakdown": {
-    "cgst": 45,
-    "sgst": 45
-  },
-  "total": 590,
-  "currency": "INR"
-}
-```
 
 ---
 
 ## Payment Gateway Integration
 
-### Supported Payment Gateways by Region
+### Stripe Integration
 
-| Region | Gateway | Currency | Tax System |
-|--------|---------|----------|------------|
-| India (IN) | Razorpay | INR | GST (18%) - CGST/SGST/IGST |
-| Saudi Arabia (SA) | Stripe, Moyasar | SAR | VAT (15%) |
-| USA (US) | Stripe | USD | Sales Tax (varies by state) |
-| Global | Stripe | Multiple | Configurable |
+#### Configuration
+```typescript
+import Stripe from 'stripe';
 
-### Payment Endpoints
-
-#### GET /api/payments/gateways?region={region}
-Get available payment gateways for region
-```json
-Response:
-{
-  "gateways": [
-    {
-      "id": "razorpay",
-      "name": "Razorpay",
-      "supportedCountries": ["IN"],
-      "supportedCurrencies": ["INR"]
-    },
-    {
-      "id": "stripe",
-      "name": "Stripe",
-      "supportedCountries": ["US", "SA", "IN"],
-      "supportedCurrencies": ["USD", "SAR", "INR", "EUR", "GBP"]
-    }
-  ]
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16',
+});
 ```
 
-#### POST /api/payments/create-intent
-Create payment intent for plan purchase
-```json
-Request:
-{
-  "planId": "plan_uuid",
-  "currency": "INR",
-  "amount": 999,
-  "billingPeriod": "monthly",
-  "paymentGateway": "razorpay"
-}
-
-Response:
-{
-  "id": "payment_intent_uuid",
-  "amount": 999,
-  "currency": "INR",
-  "status": "requires_payment",
-  "clientSecret": "pi_secret_key",
-  "taxAmount": 179.82,
-  "taxBreakdown": {
-    "cgst": 89.91,
-    "sgst": 89.91
-  },
-  "total": 1178.82
-}
-```
-
-#### POST /api/payments/confirm
-Confirm payment
-```json
-Request:
-{
-  "paymentIntentId": "payment_intent_uuid",
-  "paymentMethodId": "pm_card_visa"
-}
-
-Response:
-{
-  "status": "succeeded",
-  "subscriptionId": "sub_uuid",
-  "invoiceId": "inv_uuid",
-  "receiptUrl": "https://..."
-}
-```
-
-#### GET /api/payments/history?page=1&limit=20
-Get payment history
-
-#### GET /api/payments/:id/invoice
-Download payment invoice (PDF)
-
-#### POST /api/payments/subscription/:orgId/cancel
-Cancel subscription
-
-#### PUT /api/payments/subscription/:orgId/payment-method
-Update payment method
-
----
-
-## Tax Calculation Logic
-
-### India (GST)
-```javascript
-// Intra-state (within same state)
-CGST = (Subtotal * GST_Rate) / 2
-SGST = (Subtotal * GST_Rate) / 2
-Total = Subtotal + CGST + SGST
-
-// Inter-state (different states)
-IGST = Subtotal * GST_Rate
-Total = Subtotal + IGST
-
-// Default GST Rates: 5%, 12%, 18%, 28%
-```
-
-### Saudi Arabia (VAT)
-```javascript
-VAT = Subtotal * 15%
-Total = Subtotal + VAT
-```
-
-### Tax Implementation Example (Node.js)
-```javascript
-const calculateTax = (amount, region, isInterState = false) => {
-  const taxRates = {
-    IN: 18,
-    SA: 15,
-    US: 0, // State-specific
-  };
-
-  const rate = taxRates[region] || 0;
-  const taxAmount = (amount * rate) / 100;
-
-  if (region === 'IN') {
-    if (isInterState) {
-      return {
-        subtotal: amount,
-        igst: taxAmount,
-        total: amount + taxAmount,
-        breakdown: { IGST: taxAmount }
-      };
-    } else {
-      return {
-        subtotal: amount,
-        cgst: taxAmount / 2,
-        sgst: taxAmount / 2,
-        total: amount + taxAmount,
-        breakdown: { CGST: taxAmount / 2, SGST: taxAmount / 2 }
-      };
-    }
-  } else if (region === 'SA') {
-    return {
-      subtotal: amount,
-      vat: taxAmount,
-      total: amount + taxAmount,
-      breakdown: { VAT: taxAmount }
-    };
-  }
+#### Create Payment Intent
+```typescript
+async function createStripePayment(amount: number, currency: string) {
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount * 100, // Convert to cents
+    currency: currency.toLowerCase(),
+    automatic_payment_methods: { enabled: true },
+  });
 
   return {
-    subtotal: amount,
-    tax: taxAmount,
-    total: amount + taxAmount,
-    breakdown: { Tax: taxAmount }
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
   };
-};
-```
-
----
-
-## Multi-Language Support
-
-### Supported Languages
-- English (en) - Default
-- Arabic (ar) - RTL support for Saudi Arabia
-- Hindi (hi) - India
-
-### Adding New Languages
-1. Create translation file: `frontend/src/i18n/locales/{locale}.json`
-2. Add to i18n config: `frontend/src/i18n/config.ts`
-3. Update LocaleContext supported languages
-4. Add to backend locale support (optional)
-
-### Translation Structure
-```json
-{
-  "common": { "save": "Save", "cancel": "Cancel" },
-  "dashboard": { "title": "Dashboard" },
-  "invoices": { "create": "Create Invoice" }
 }
 ```
 
----
+### Razorpay Integration (for India)
 
-## Payment Gateway Implementation
-
-### Razorpay (India)
-```javascript
-const Razorpay = require('razorpay');
+#### Configuration
+```typescript
+import Razorpay from 'razorpay';
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
+  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
+```
 
-// Create order
-const order = await razorpay.orders.create({
-  amount: totalInPaise,
-  currency: 'INR',
-  receipt: `receipt_${Date.now()}`,
-  notes: { planId, userId }
-});
+#### Create Order
+```typescript
+async function createRazorpayOrder(amount: number, currency: string) {
+  const order = await razorpay.orders.create({
+    amount: amount * 100, // Convert to paise
+    currency: currency,
+    receipt: `receipt_${Date.now()}`,
+  });
 
-// Verify payment
-const crypto = require('crypto');
-const generated_signature = crypto
-  .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-  .update(order.id + '|' + payment.id)
-  .digest('hex');
-
-if (generated_signature === signature) {
-  // Payment verified
+  return {
+    orderId: order.id,
+    amount: order.amount,
+    currency: order.currency,
+  };
 }
 ```
 
-### Stripe (Global)
-```javascript
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
-// Create payment intent
-const paymentIntent = await stripe.paymentIntents.create({
-  amount: totalInCents,
-  currency: 'sar', // or usd, inr
-  metadata: { planId, userId }
-});
-
-// Create subscription
-const subscription = await stripe.subscriptions.create({
-  customer: customerId,
-  items: [{ price: priceId }],
-  payment_behavior: 'default_incomplete',
-  expand: ['latest_invoice.payment_intent']
-});
-```
-
 ---
 
-## Webhook Handlers
+## Tax Calculation System
 
-### Razorpay Webhooks
-```javascript
-app.post('/webhooks/razorpay', async (req, res) => {
-  const signature = req.headers['x-razorpay-signature'];
-  
-  const isValid = Razorpay.validateWebhookSignature(
-    JSON.stringify(req.body),
-    signature,
-    process.env.RAZORPAY_WEBHOOK_SECRET
-  );
+### India GST Calculation
+```typescript
+interface GSTBreakdown {
+  subtotal: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  total: number;
+}
 
-  if (isValid) {
-    const event = req.body.event;
-    
-    switch(event) {
-      case 'payment.captured':
-        await handlePaymentSuccess(req.body.payload);
-        break;
-      case 'payment.failed':
-        await handlePaymentFailure(req.body.payload);
-        break;
-    }
+function calculateIndiaGST(
+  subtotal: number,
+  gstRate: number,
+  isInterState: boolean
+): GSTBreakdown {
+  const gstAmount = (subtotal * gstRate) / 100;
+
+  if (isInterState) {
+    // Interstate: IGST
+    return {
+      subtotal,
+      cgst: 0,
+      sgst: 0,
+      igst: gstAmount,
+      total: subtotal + gstAmount,
+    };
+  } else {
+    // Intrastate: CGST + SGST (split equally)
+    return {
+      subtotal,
+      cgst: gstAmount / 2,
+      sgst: gstAmount / 2,
+      igst: 0,
+      total: subtotal + gstAmount,
+    };
   }
-
-  res.json({ status: 'ok' });
-});
+}
 ```
 
-### Stripe Webhooks
-```javascript
-app.post('/webhooks/stripe', async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  
-  const event = stripe.webhooks.constructEvent(
-    req.body,
-    sig,
-    process.env.STRIPE_WEBHOOK_SECRET
-  );
+### Saudi Arabia VAT Calculation
+```typescript
+interface VATBreakdown {
+  subtotal: number;
+  vat: number;
+  total: number;
+}
 
-  switch (event.type) {
-    case 'payment_intent.succeeded':
-      await handlePaymentSuccess(event.data.object);
-      break;
-    case 'customer.subscription.deleted':
-      await handleSubscriptionCancelled(event.data.object);
-      break;
-  }
+function calculateSaudiVAT(subtotal: number, vatRate: number = 15): VATBreakdown {
+  const vatAmount = (subtotal * vatRate) / 100;
 
-  res.json({ received: true });
-});
-```
-
----
-
-## Environment Variables (Complete List)
-
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/invoicepro"
-
-# JWT
-JWT_SECRET="your_jwt_secret_key"
-JWT_EXPIRY="7d"
-
-# Server
-PORT=3000
-NODE_ENV="development"
-
-# Payment Gateways
-## Razorpay (India)
-RAZORPAY_KEY_ID="rzp_test_..."
-RAZORPAY_KEY_SECRET="..."
-RAZORPAY_WEBHOOK_SECRET="..."
-
-## Stripe (Global)
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
-# Email
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT=587
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
-
-# Region Defaults
-DEFAULT_REGION="IN"
-DEFAULT_CURRENCY="INR"
-DEFAULT_TAX_RATE=18
-
-# Frontend URL (for redirects)
-FRONTEND_URL="http://localhost:5173"
-```
-
----
-
-## Security Implementation
-
-### Role-Based Access Control
-```javascript
-// Middleware: requireRole(['SUPER_ADMIN'])
-const requireRole = (allowedRoles) => {
-  return async (req, res, next) => {
-    const userRoles = await UserRole.findMany({
-      where: { userId: req.user.id }
-    });
-    
-    const hasPermission = userRoles.some(ur => 
-      allowedRoles.includes(ur.role)
-    );
-    
-    if (!hasPermission) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    
-    next();
+  return {
+    subtotal,
+    vat: vatAmount,
+    total: subtotal + vatAmount,
   };
-};
+}
 ```
 
-### Audit Logging
-```javascript
-const logAction = async (action, userId, metadata) => {
-  await SystemLog.create({
-    data: {
-      action,
-      userId,
-      userName: user.name,
-      metadata,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    }
-  });
-};
-```
+---
+
+## Data Points & Calculations
+
+### Dynamic Calculations Performed by Backend
+
+1. **Invoice Calculations**
+   - Subtotal = Sum of all item amounts
+   - Tax calculation based on organization country
+   - Total = Subtotal + Tax
+   - Balance = Total - Paid Amount
+
+2. **Client Metrics**
+   - Total Invoiced (aggregate from all invoices)
+   - Total Paid (aggregate from all payments)
+   - Outstanding Balance (Total Invoiced - Total Paid)
+   - Average Invoice Value
+   - Payment Rate (Total Paid / Total Invoiced * 100)
+
+3. **Revenue Analytics**
+   - Monthly Revenue Trends
+   - Year-over-Year Growth
+   - Revenue by Payment Method
+   - Revenue by Client
+   - Revenue by Product/Service
+
+4. **Super Admin Metrics**
+   - Total Organizations Count
+   - Active vs Suspended Organizations
+   - Total System Revenue
+   - Plan Distribution
+   - User Activity Metrics
+   - Invoice Volume Trends
+
+5. **Tax Calculations**
+   - GST (India): CGST + SGST or IGST
+   - VAT (Saudi Arabia): 15%
+   - Sales Tax (US): Configurable by state
+   - Tax Reports for Accounting
 
 ---
 
 ## Environment Variables
 
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/invoicepro"
-JWT_SECRET="your_jwt_secret_key"
-JWT_EXPIRY="7d"
-PORT=3000
-
-# Email (Optional)
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT=587
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
-
-# Region Defaults
-DEFAULT_REGION="IN"
-DEFAULT_CURRENCY="INR"
-DEFAULT_TAX_RATE=18
-```
-
----
-
-## Installation & Setup
-
 ```bash
-# 1. Install dependencies
-npm install express prisma @prisma/client bcrypt jsonwebtoken cors dotenv
+# Server
+NODE_ENV=development
+PORT=5000
+API_BASE_URL=http://localhost:5000
 
-# 2. Initialize Prisma
-npx prisma init
+# Database
+MONGODB_URI=mongodb://localhost:27017/invoice-system
+MONGODB_DB_NAME=invoice_system
 
-# 3. Create database schema (copy schema from above)
-# Edit prisma/schema.prisma
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=7d
 
-# 4. Run migrations
-npx prisma migrate dev --name init
+# Payment Gateways - Stripe
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
 
-# 5. Seed super admin
-npx ts-node prisma/seed.ts
+# Payment Gateways - Razorpay (India)
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=xxxxxxxxxxxxx
 
-# 6. Start server
-npm run dev
+# Email Service
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASSWORD=SG.xxxxxxxxxxxxx
+EMAIL_FROM=noreply@yourapp.com
+
+# Currency API
+EXCHANGE_RATE_API_KEY=xxxxxxxxxxxxx
+
+# CORS
+CORS_ORIGIN=http://localhost:5173,https://yourapp.com
 ```
 
 ---
 
-## Rate Limiting
+## Error Handling
 
-```javascript
-const rateLimit = require('express-rate-limit');
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-
-const superAdminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200 // Higher limit for super admin
-});
-
-app.use('/api/', limiter);
-app.use('/api/super-admin', superAdminLimiter);
+### Standard Error Response Format
+```typescript
+interface ErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: any;
+    field?: string;
+  };
+}
 ```
+
+### Error Codes
+- `UNAUTHORIZED` - Authentication failed
+- `FORBIDDEN` - Insufficient permissions
+- `VALIDATION_ERROR` - Input validation failed
+- `NOT_FOUND` - Resource not found
+- `PAYMENT_FAILED` - Payment processing failed
+- `INTERNAL_ERROR` - Server error
+
+---
+
+**End of Documentation**
+
+This backend is designed to work seamlessly with your React + TypeScript frontend, providing all necessary data points for dynamic rendering, calculations, and multi-region support.

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { loginSchema } from '@/lib/validations/auth';
 import { z } from 'zod';
+import { PublicNavbar } from '@/components/PublicNavbar';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -56,7 +57,11 @@ export default function Login() {
   };
 
   return (
+    
+   <>
+    <PublicNavbar />
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+            
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome Back</CardTitle>
@@ -92,6 +97,22 @@ export default function Login() {
             </Button>
           </form>
 
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mt-2"
+            onClick={() => {
+            const demoCredentials = {
+            email: 'test1@gmail.com',
+            password: 'Test@123',
+            };
+
+            setFormData(demoCredentials);
+            handleSubmit(new Event('submit') as any); // simulate form submit
+            }}>
+            Fast Sign-In
+          </Button>
+
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
               Don't have an account?{' '}
@@ -100,8 +121,10 @@ export default function Login() {
               </Link>
             </p>
           </div>
+          
         </CardContent>
       </Card>
     </div>
+   </>
   );
 }
