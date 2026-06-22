@@ -35,6 +35,25 @@ enum BranchStatus {
   SUSPENDED
 }
 
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  LEFT
+}
+
+enum PermissionModule {
+  USERS
+  ORGANIZATIONS
+  BRANCHES
+  CLIENTS
+  PRODUCTS
+  INVOICES
+  PAYMENTS
+  REPORTS
+  SETTINGS
+}
+
 /// Global user account.
 /// A user can belong to multiple organizations through Membership.
 
@@ -67,6 +86,8 @@ model User {
 
   createdAt DateTime @default(now())
 
+  memberships Membership[]
+
   updatedAt DateTime @updatedAt
 
   deletedAt DateTime?
@@ -80,7 +101,6 @@ model User {
   @@map("users")
 
 }
-
 
 
 model Organization {
@@ -102,6 +122,10 @@ model Organization {
 
   status        OrganizationStatus  @default(PENDING)
 
+  memberships Membership[]
+
+  roles Role[]
+
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   deletedAt     DateTime?
@@ -110,6 +134,8 @@ model Organization {
 
   @@index([status])
   @@index([deletedAt])
+
+  @@index([createdAt])
 
   @@map("organizations")
 }
@@ -136,6 +162,8 @@ model Branch {
 
   status         BranchStatus @default(ACTIVE)
 
+  memberships Membership[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
@@ -146,5 +174,112 @@ model Branch {
   @@index([status])
   @@index([deletedAt])
 
+  @@unique([organizationId, code])
+
   @@map("branches")
+}
+
+model Membership {
+  id              String             @id @default(uuid()) @db.Uuid
+
+  userId          String             @db.Uuid
+  organizationId  String             @db.Uuid
+  roleId          String             @db.Uuid
+  branchId        String?            @db.Uuid
+
+  employeeCode    String?            @db.VarChar(50)
+  jobTitle        String?            @db.VarChar(100)
+
+  status          MembershipStatus   @default(ACTIVE)
+
+  joinedAt        DateTime           @default(now())
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch          Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  role            Role               @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([roleId])
+  @@index([branchId])
+  @@index([status])
+  @@index([deletedAt])
+
+  @@map("memberships")
+}
+
+model Role {
+  id              String   @id @default(uuid()) @db.Uuid
+
+  organizationId  String   @db.Uuid
+
+  name            String   @db.VarChar(100)
+  description     String?  @db.VarChar(255)
+
+  isSystem        Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberships     Membership[]
+  rolePermissions RolePermission[]
+
+  @@unique([organizationId, name])
+
+  @@index([organizationId])
+  @@index([deletedAt])
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+
+  module      PermissionModule
+
+  action      String   @db.VarChar(50)
+
+  code        String   @unique @db.VarChar(100)
+
+  name        String   @db.VarChar(100)
+
+  description String?  @db.VarChar(255)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@unique([module, action])
+
+  @@index([module])
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            String      @id @default(uuid()) @db.Uuid
+
+  roleId        String      @db.Uuid
+  permissionId  String      @db.Uuid
+
+  createdAt     DateTime    @default(now())
+
+  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+
+  @@index([roleId])
+  @@index([permissionId])
+
+  @@map("role_permissions")
 }
