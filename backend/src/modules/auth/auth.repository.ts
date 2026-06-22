@@ -27,5 +27,16 @@ export const authRepository = {
       data,
     });
   },
+
+  async updateLastLogin(userId: string) {
+  return prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      lastLoginAt: new Date(),
+    },
+    });
+  },
   
 };
