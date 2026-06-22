@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
+import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -27,5 +28,7 @@ app.get("/health", async (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use(errorMiddleware);
 
 export default app;
