@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
+import type { StringValue } from "ms";
 
 export interface JwtPayload {
   userId: string;
@@ -7,7 +8,7 @@ export interface JwtPayload {
 
 export function generateAccessToken(payload: JwtPayload): string {
   return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
+    expiresIn: env.JWT_EXPIRES_IN as StringValue,
   });
 }
 

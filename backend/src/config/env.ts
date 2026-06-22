@@ -8,7 +8,7 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 
-  PORT: z.coerce.number().default(4000),
+  PORT: z.coerce.number().int().positive().default(4000),
 
   DATABASE_URL: z.string().min(1),
 
@@ -18,7 +18,7 @@ const envSchema = z.object({
 
   JWT_EXPIRES_IN: z.string().default("15m"),
   
-  BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
+  BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
 });
 
 export const env = envSchema.parse(process.env);

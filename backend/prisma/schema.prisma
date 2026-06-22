@@ -211,6 +211,8 @@ model Membership {
   @@index([deletedAt])
 
   @@map("memberships")
+
+  @@unique([userId, organizationId])
 }
 
 model Role {

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { AppError } from "../shared/errors/AppError.js";
 import { ApiResponse } from "../shared/response/ApiResponse.js";
 import { HTTP_STATUS } from "../shared/constants/http-status.js";
+import { ZodError } from "zod";
 
 export function errorMiddleware(
   err: Error,
@@ -9,11 +10,16 @@ export function errorMiddleware(
   res: Response,
   _next: NextFunction
 ) {
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json(
-      new ApiResponse(false, err.message)
-    );
-  }
+  
+  if (err instanceof ZodError) {
+  return res.status(400).json(
+    new ApiResponse(
+      false,
+      "Validation failed",
+      err.flatten()
+    )
+  );
+}
 
   console.error(err);
 
