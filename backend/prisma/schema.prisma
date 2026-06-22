@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OrganizationStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+/// Global user account.
+/// A user can belong to multiple organizations through Membership.
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+
+  firstName String @db.VarChar(100)
+
+  lastName  String @db.VarChar(100)
+
+  displayName String @db.VarChar(200)
+
+  email String @unique @db.VarChar(255)
+
+  phone String? @db.VarChar(30)
+
+  passwordHash String @db.VarChar(255)
+
+  avatarFileId String? @db.Uuid
+
+  status UserStatus @default(PENDING_VERIFICATION)
+
+  emailVerifiedAt DateTime?
+
+  phoneVerifiedAt DateTime?
+
+  twoFactorEnabled Boolean @default(false)
+
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  deletedAt DateTime?
+
+  @@index([status])
+
+  @@index([deletedAt])
+
+  @@index([createdAt])
+
+  @@map("users")
+
+}
+
+
+
+model Organization {
+  id            String              @id @default(uuid()) @db.Uuid
+
+  name          String              @db.VarChar(200)
+  legalName     String?             @db.VarChar(255)
+
+  slug          String              @unique @db.VarChar(100)
+
+  email         String?             @db.VarChar(255)
+  phone         String?             @db.VarChar(30)
+  website       String?             @db.VarChar(255)
+
+  industry      String?             @db.VarChar(100)
+  businessType  String?             @db.VarChar(100)
+
+  logoFileId    String?             @db.Uuid
+
+  status        OrganizationStatus  @default(PENDING)
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  branches Branch[]
+
+  @@index([status])
+  @@index([deletedAt])
+
+  @@map("organizations")
+}
+
+
+model Branch {
+  id             String   @id @default(uuid()) @db.Uuid
+
+  organizationId String   @db.Uuid
+
+  name           String   @db.VarChar(200)
+  code           String?  @db.VarChar(20)
+
+  email          String?  @db.VarChar(255)
+  phone          String?  @db.VarChar(30)
+
+  address        String?  @db.Text
+  city           String?  @db.VarChar(100)
+  state          String?  @db.VarChar(100)
+  country        String?  @db.VarChar(100)
+  postalCode     String?  @db.VarChar(20)
+
+  invoicePrefix  String?  @db.VarChar(20)
+
+  status         BranchStatus @default(ACTIVE)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([deletedAt])
+
+  @@map("branches")
+}
