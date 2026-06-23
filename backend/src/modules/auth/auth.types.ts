@@ -26,3 +26,13 @@ export interface AuthResponseDto {
   accessToken: string;
   user: UserResponseDto;
 }
+
+export interface AuthenticatedUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  email: string;
+  status: UserStatus;
+  createdAt: Date;
+}

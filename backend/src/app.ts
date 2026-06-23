@@ -7,7 +7,6 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import routes from "./routes/v1.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
-import { ApiResponse } from "./shared/response/ApiResponse.js";
 import { HTTP_STATUS } from "./shared/constants/http-status.js";
 
 const app = express();
@@ -28,25 +27,23 @@ app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
   return res.status(HTTP_STATUS.OK).json(
-    new ApiResponse(
-      true,
-      "InvoicePro Backend Running",
-      {
+    {
+      success: true,
+      message: "InvoicePro Backend Running",
+      data: {
         timestamp: new Date().toISOString(),
       }
-    )
+    }
   );
 });
 
 app.use("/api/v1", routes);
 
 app.use("*", (_req, res) => {
-  return res.status(HTTP_STATUS.NOT_FOUND).json(
-    new ApiResponse(
-      false,
-      "Route not found."
-    )
-  );
+  return res.status(HTTP_STATUS.NOT_FOUND).json({
+      success:false,
+      message:"Route not found."
+    });
 });
 
 app.use(errorMiddleware);

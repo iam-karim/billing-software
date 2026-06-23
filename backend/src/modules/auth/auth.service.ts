@@ -103,7 +103,7 @@ async login(data: LoginUserDto) {
       status: user.status,
     },
   };
-}
+},
 
 }
 
