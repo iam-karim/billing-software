@@ -1,17 +1,13 @@
-export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly isOperational: boolean;
+import { HTTP_STATUS } from "../constants/http-status.js";
 
+export class AppError extends Error {
   constructor(
     message: string,
-    statusCode = 500,
-    isOperational = true
+    public readonly statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    public readonly code?: string
   ) {
     super(message);
 
-    this.statusCode = statusCode;
-    this.isOperational = isOperational;
-
-    Error.captureStackTrace(this, this.constructor);
+    Error.captureStackTrace(this, AppError);
   }
 }
