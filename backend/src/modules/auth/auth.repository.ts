@@ -1,34 +1,26 @@
-import { User } from "@prisma/client";
-import { prisma } from "../../config/database.js";
+import { Prisma } from "@prisma/client";
 
+import { prisma } from "../../database/client.js";
 
-export const authRepository = {
+export async function findUserByEmail(email: string) {
+  return prisma.user.findUnique({
+    where: { email },
+  });
+}
 
-  async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { email },
-    });
-  },
+export async function findUserById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+  });
+}
 
-  async findById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { id },
-    });
-  },
+export async function createUser(data: Prisma.UserCreateInput) {
+  return prisma.user.create({
+    data,
+  });
+}
 
-  async create(data: {
-    firstName: string;
-    lastName: string;
-    displayName: string;
-    email: string;
-    passwordHash: string;
-  }): Promise<User> {
-    return prisma.user.create({
-      data,
-    });
-  },
-
-  async updateLastLogin(userId: string) {
+export async function updateUserLastLogin(userId: string) {
   return prisma.user.update({
     where: {
       id: userId,
@@ -36,7 +28,5 @@ export const authRepository = {
     data: {
       lastLoginAt: new Date(),
     },
-    });
-  },
-  
-};
+  });
+}

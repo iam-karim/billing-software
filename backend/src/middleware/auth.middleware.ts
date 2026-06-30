@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-
-import { authRepository } from "../modules/auth/auth.repository.js";
-import { verifyAccessToken } from "../shared/security/jwt.js";
-import { AppError } from "../shared/errors/AppError.js";
-import { HTTP_STATUS } from "../shared/constants/http-status.js";
 import { UserStatus } from "@prisma/client";
+
+import { findUserById } from "../modules/auth/auth.repository.js";
+import { HTTP_STATUS } from "../shared/constants/http-status.js";
+import { AppError } from "../shared/errors/AppError.js";
+import { verifyAccessToken } from "../shared/security/jwt.js";
 
 export async function authMiddleware(
   req: Request,
@@ -25,7 +25,7 @@ export async function authMiddleware(
 
     const payload = verifyAccessToken(token);
 
-    const user = await authRepository.findById(payload.userId);
+    const user = await findUserById(payload.userId);
 
     if (!user) {
       throw new AppError(
@@ -34,28 +34,25 @@ export async function authMiddleware(
       );
     }
 
-    if (
-      user.status === UserStatus.INACTIVE ||
-      user.status === UserStatus.SUSPENDED
-    ) {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new AppError(
         "Your account is not active.",
         HTTP_STATUS.FORBIDDEN
       );
     }
 
-  req.user = {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    displayName: user.displayName,
-    email: user.email,
-    status: user.status,
-    createdAt: user.createdAt,
-  };
+    req.user = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      displayName: user.displayName,
+      email: user.email,
+      status: user.status,
+      createdAt: user.createdAt,
+    };
 
-    return next();
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 }

@@ -1,49 +1,49 @@
 import { Request, Response, NextFunction } from "express";
 
-import { authService } from "./auth.service.js";
 import { HTTP_STATUS } from "../../shared/constants/http-status.js";
 
-export const authController = {
+import {
+  login as loginUser,
+  register as registerUser,
+} from "./auth.service.js";
 
-  async register(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const user = await authService.register(req.body);
+export async function register(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await registerUser(req.body);
 
-      return res.status(HTTP_STATUS.CREATED).json({  
-        success: true,
-        message: "User registered successfully.",
-        data: user
-      });
-      
-    } catch (error) {
-      return next(error);
-    }
-  },
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      message: "User registered successfully.",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
-  async login(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const result = await authService.login(req.body);
+export async function login(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const result = await loginUser(req.body);
 
-      return res.status(HTTP_STATUS.OK).json({
-          success: true,
-          message:"Login successful.",
-          data: result
-      });
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: "Login successful.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
-    } catch (error) {
-      return next(error);
-    }
-  },
-
-async me(
+export async function me(
   req: Request,
   res: Response,
   next: NextFunction
@@ -55,8 +55,6 @@ async me(
       data: req.user,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 }
-
-};

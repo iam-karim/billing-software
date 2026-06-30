@@ -29,16 +29,26 @@ enum OrganizationStatus {
   ARCHIVED
 }
 
+enum BusinessType {
+  RETAIL
+  WHOLESALE
+  SERVICE
+  MANUFACTURING
+  DISTRIBUTOR
+  FREELANCER
+  OTHER
+}
+
 enum BranchStatus {
   ACTIVE
   INACTIVE
-  SUSPENDED
 }
 
 enum MembershipStatus {
   INVITED
   ACTIVE
   SUSPENDED
+  REJECTED
   LEFT
 }
 
@@ -52,6 +62,16 @@ enum PermissionModule {
   PAYMENTS
   REPORTS
   SETTINGS
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  APPROVE
+  MANAGE
 }
 
 /// Global user account.
@@ -74,7 +94,7 @@ model User {
 
   avatarFileId String? @db.Uuid
 
-  status UserStatus @default(PENDING_VERIFICATION)
+  status UserStatus @default(ACTIVE)
 
   emailVerifiedAt DateTime?
 
@@ -114,23 +134,26 @@ model Organization {
   email         String?             @db.VarChar(255)
   phone         String?             @db.VarChar(30)
   website       String?             @db.VarChar(255)
+  country       String              @db.VarChar(100)
 
   industry      String?             @db.VarChar(100)
-  businessType  String?             @db.VarChar(100)
+  businessType  BusinessType?       
 
   logoFileId    String?             @db.Uuid
 
-  status        OrganizationStatus  @default(PENDING)
+  status        OrganizationStatus  @default(ACTIVE)
+  timezone      String?             @db.VarChar(100)
 
   memberships Membership[]
 
   roles Role[]
 
+  branches    Branch[]
+
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   deletedAt     DateTime?
 
-  branches Branch[]
 
   @@index([status])
   @@index([deletedAt])
@@ -247,7 +270,7 @@ model Permission {
 
   module      PermissionModule
 
-  action      String   @db.VarChar(50)
+  action      PermissionAction
 
   code        String   @unique @db.VarChar(100)
 

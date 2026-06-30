@@ -5,7 +5,7 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 
 import { env } from "./config/env.js";
-import routes from "./routes/v1.js";
+import { v1Routes } from "./routes/v1.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { HTTP_STATUS } from "./shared/constants/http-status.js";
 
@@ -37,7 +37,7 @@ app.get("/health", (_req, res) => {
   );
 });
 
-app.use("/api/v1", routes);
+app.use("/api/v1", v1Routes);
 
 app.use("*", (_req, res) => {
   return res.status(HTTP_STATUS.NOT_FOUND).json({

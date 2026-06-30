@@ -1,3 +1,6 @@
+import { UserStatus } from "@prisma/client";
+
+import { HTTP_STATUS } from "../../shared/constants/http-status.js";
 import { AppError } from "../../shared/errors/AppError.js";
 import {
   comparePassword,
@@ -5,62 +8,60 @@ import {
   hashPassword,
 } from "../../shared/security/index.js";
 
-import { HTTP_STATUS } from "../../shared/constants/http-status.js";
-import { UserStatus } from "@prisma/client";
-
-
-import { authRepository } from "./auth.repository.js";
 import {
-  LoginUserDto,
-  RegisterUserDto,
-} from "./auth.types.js";
+  createUser,
+  findUserByEmail,
+  updateUserLastLogin,
+} from "./auth.repository.js";
 
-export const authService = {
+import type {
+  LoginInput,
+  RegisterInput,
+} from "./auth.validation.js";
 
-  async register(data: RegisterUserDto) {
-    // Check if user already exists
-    const existingUser = await authRepository.findByEmail(data.email);
+const INVALID_CREDENTIALS_MESSAGE = "Invalid email or password.";
 
-    if (existingUser) {
-      throw new AppError("Email already exists.", 409);
-    }
+export async function register(data: RegisterInput) {
+  const existingUser = await findUserByEmail(data.email);
 
-    // Hash password
-    const passwordHash = await hashPassword(data.password);
+  if (existingUser) {
+    throw new AppError(
+      "Email already exists.",
+      HTTP_STATUS.CONFLICT
+    );
+  }
 
-    // Create user
-    const user = await authRepository.create({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      displayName: data.displayName,
-      email: data.email,
-      passwordHash,
-    });
+  const passwordHash = await hashPassword(data.password);
 
-    // Return safe user object
-    return {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      displayName: user.displayName,
-      email: user.email,
-      status: user.status,
-      createdAt: user.createdAt,
-    };
-  },
+  const displayName = `${data.firstName} ${data.lastName}`;
 
-async login(data: LoginUserDto) {
-  // Find user by email
-  const user = await authRepository.findByEmail(data.email);
+  const user = await createUser({
+    firstName: data.firstName,
+    lastName: data.lastName,
+    displayName,
+    email: data.email,
+    passwordHash,
+  });
+
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: user.displayName,
+    email: user.email,
+  };
+}
+
+export async function login(data: LoginInput) {
+  const user = await findUserByEmail(data.email);
 
   if (!user) {
     throw new AppError(
-      "Invalid email or password.",
+      INVALID_CREDENTIALS_MESSAGE,
       HTTP_STATUS.UNAUTHORIZED
     );
   }
 
-  // Compare password
   const isPasswordValid = await comparePassword(
     data.password,
     user.passwordHash
@@ -68,26 +69,20 @@ async login(data: LoginUserDto) {
 
   if (!isPasswordValid) {
     throw new AppError(
-      "Invalid email or password.",
+      INVALID_CREDENTIALS_MESSAGE,
       HTTP_STATUS.UNAUTHORIZED
     );
   }
 
-  // Check account status
-  if (
-    user.status === UserStatus.INACTIVE ||
-    user.status === UserStatus.SUSPENDED
-  ) {
+  if (user.status !== UserStatus.ACTIVE) {
     throw new AppError(
       "Your account is not active.",
       HTTP_STATUS.FORBIDDEN
     );
   }
 
-  // Update last login
-  await authRepository.updateLastLogin(user.id);
+  await updateUserLastLogin(user.id);
 
-  // Generate JWT
   const accessToken = generateAccessToken({
     userId: user.id,
   });
@@ -103,7 +98,4 @@ async login(data: LoginUserDto) {
       status: user.status,
     },
   };
-},
-
 }
-

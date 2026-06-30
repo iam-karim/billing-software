@@ -1,31 +1,37 @@
 import { Router } from "express";
 
-import { authController } from "./auth.controller.js";
 import { validate } from "../../middleware/validate.middleware.js";
-import { loginSchema, registerSchema } from "./auth.validation.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
+
+import {
+  login,
+  me,
+  register,
+} from "./auth.controller.js";
+
+import {
+  loginSchema,
+  registerSchema,
+} from "./auth.validation.js";
 
 const router = Router();
 
 router.post(
   "/register",
   validate(registerSchema),
-  authController.register
+  register
 );
 
 router.post(
   "/login",
   validate(loginSchema),
-  authController.login
+  login
 );
-
 
 router.get(
   "/me",
   authMiddleware,
-  authController.me
+  me
 );
 
-
-
-export default router;
+export const authRoutes = router;

@@ -10,3 +10,24 @@ declare global {
 
 export {};
 
+
+
+// import { UserStatus } from "@prisma/client";
+
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       user: {
+//         id: string;
+//         firstName: string;
+//         lastName: string;
+//         displayName: string;
+//         email: string;
+//         status: UserStatus;
+//         createdAt: Date;
+//       };
+//     }
+//   }
+// }
+
+// export {};
