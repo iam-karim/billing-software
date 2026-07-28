@@ -1,0 +1,310 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OrganizationStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum BusinessType {
+  RETAIL
+  WHOLESALE
+  SERVICE
+  MANUFACTURING
+  DISTRIBUTOR
+  FREELANCER
+  OTHER
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REJECTED
+  LEFT
+}
+
+enum PermissionModule {
+  USERS
+  ORGANIZATIONS
+  BRANCHES
+  CLIENTS
+  PRODUCTS
+  INVOICES
+  PAYMENTS
+  REPORTS
+  SETTINGS
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  APPROVE
+  MANAGE
+}
+
+/// Global user account.
+/// A user can belong to multiple organizations through Membership.
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+
+  firstName String @db.VarChar(100)
+
+  lastName  String @db.VarChar(100)
+
+  displayName String @db.VarChar(200)
+
+  email String @unique @db.VarChar(255)
+
+  phone String? @db.VarChar(30)
+
+  passwordHash String @db.VarChar(255)
+
+  avatarFileId String? @db.Uuid
+
+  status UserStatus @default(ACTIVE)
+
+  emailVerifiedAt DateTime?
+
+  phoneVerifiedAt DateTime?
+
+  twoFactorEnabled Boolean @default(false)
+
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  memberships Membership[]
+
+  updatedAt DateTime @updatedAt
+
+  deletedAt DateTime?
+
+  @@index([status])
+
+  @@index([deletedAt])
+
+  @@index([createdAt])
+
+  @@map("users")
+
+}
+
+
+model Organization {
+  id            String              @id @default(uuid()) @db.Uuid
+
+  name          String              @db.VarChar(200)
+  legalName     String?             @db.VarChar(255)
+
+  slug          String              @unique @db.VarChar(100)
+
+  email         String?             @db.VarChar(255)
+  phone         String?             @db.VarChar(30)
+  website       String?             @db.VarChar(255)
+  country       String              @db.VarChar(100)
+
+  industry      String?             @db.VarChar(100)
+  businessType  BusinessType?       
+
+  logoFileId    String?             @db.Uuid
+
+  status        OrganizationStatus  @default(ACTIVE)
+  timezone      String?             @db.VarChar(100)
+
+  memberships Membership[]
+
+  roles Role[]
+
+  branches    Branch[]
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+
+  @@index([status])
+  @@index([deletedAt])
+
+  @@index([createdAt])
+
+  @@map("organizations")
+}
+
+
+model Branch {
+  id             String   @id @default(uuid()) @db.Uuid
+
+  organizationId String   @db.Uuid
+
+  name           String   @db.VarChar(200)
+  code           String?  @db.VarChar(20)
+
+  email          String?  @db.VarChar(255)
+  phone          String?  @db.VarChar(30)
+
+  address        String?  @db.Text
+  city           String?  @db.VarChar(100)
+  state          String?  @db.VarChar(100)
+  country        String?  @db.VarChar(100)
+  postalCode     String?  @db.VarChar(20)
+
+  invoicePrefix  String?  @db.VarChar(20)
+
+  status         BranchStatus @default(ACTIVE)
+
+  memberships Membership[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([deletedAt])
+
+  @@unique([organizationId, code])
+
+  @@map("branches")
+}
+
+model Membership {
+  id              String             @id @default(uuid()) @db.Uuid
+
+  userId          String             @db.Uuid
+  organizationId  String             @db.Uuid
+  roleId          String             @db.Uuid
+  branchId        String?            @db.Uuid
+
+  employeeCode    String?            @db.VarChar(50)
+  jobTitle        String?            @db.VarChar(100)
+
+  status          MembershipStatus   @default(ACTIVE)
+
+  joinedAt        DateTime           @default(now())
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch          Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  role            Role               @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([roleId])
+  @@index([branchId])
+  @@index([status])
+  @@index([deletedAt])
+
+  @@map("memberships")
+
+  @@unique([userId, organizationId])
+}
+
+model Role {
+  id              String   @id @default(uuid()) @db.Uuid
+
+  organizationId  String   @db.Uuid
+
+  name            String   @db.VarChar(100)
+  description     String?  @db.VarChar(255)
+
+  isSystem        Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberships     Membership[]
+  rolePermissions RolePermission[]
+
+  @@unique([organizationId, name])
+
+  @@index([organizationId])
+  @@index([deletedAt])
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+
+  module      PermissionModule
+
+  action      PermissionAction
+
+  code        String   @unique @db.VarChar(100)
+
+  name        String   @db.VarChar(100)
+
+  description String?  @db.VarChar(255)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@unique([module, action])
+
+  @@index([module])
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            String      @id @default(uuid()) @db.Uuid
+
+  roleId        String      @db.Uuid
+  permissionId  String      @db.Uuid
+
+  createdAt     DateTime    @default(now())
+
+  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+
+  @@index([roleId])
+  @@index([permissionId])
+
+  @@map("role_permissions")
+}

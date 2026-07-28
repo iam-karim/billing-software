@@ -134,3 +134,19 @@ storybook-static/
 *.temp
 *.bak
 
+# Uploads
+uploads/
+
+# Turbo (future)
+.turbo/
+
+# Environment files
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Prisma generated client (if generated locally)
+generated/
+
+# OS
+$RECYCLE.BIN/
